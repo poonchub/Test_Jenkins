@@ -1,43 +1,47 @@
 pipeline {
     agent any
 
-    environment {
-        FIREBASE_TOKEN = credentials('FIREBASE_TOKEN')
-    }
-
     stages {
         stage('Install dependencies') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u root'
+                }
+            }
             steps {
-                script {
-                    docker.image('node:18-alpine').inside('-u root') {
-                        dir('frontend') {
-                            sh 'npm install'
-                        }
-                    }
+                dir('frontend') {
+                    sh 'npm install'
                 }
             }
         }
 
         stage('Build') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u root'
+                }
+            }
             steps {
-                script {
-                    docker.image('node:18-alpine').inside('-u root') {
-                        dir('frontend') {
-                            sh 'npm run build'
-                        }
-                    }
+                dir('frontend') {
+                    sh 'npm run build'
                 }
             }
         }
 
         stage('Deploy to Firebase') {
+            agent {
+                docker {
+                    image 'node:18-alpine'
+                    args '-u root'
+                }
+            }
             steps {
-                script {
-                    docker.image('node:18-alpine').inside('-u root') {
-                        dir('frontend') {
-                            sh 'npm install -g firebase-tools'
-                            sh "firebase deploy --token $FIREBASE_TOKEN"
-                        }
+                dir('frontend') {
+                    withCredentials([string(credentialsId: 'FIREBASE_TOKEN', variable: 'FIREBASE_TOKEN')]) {
+                        sh 'npm install -g firebase-tools'
+                        sh 'firebase deploy --token "$FIREBASE_TOKEN"'
                     }
                 }
             }
