@@ -11,11 +11,11 @@ pipeline {
                 sh 'docker version'
             }
         }
-        
+
         stage('Install dependencies') {
             steps {
                 dir('frontend') {
-                    sh 'docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c "npm install"'
+                    sh 'docker run --rm -v "${WORKSPACE}/frontend":/app -w /app node:18-alpine sh -c "npm install"'
                 }
             }
         }
@@ -23,7 +23,7 @@ pipeline {
         stage('Build') {
             steps {
                 dir('frontend') {
-                    sh 'docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c "npm run build"'
+                    sh 'docker run --rm -v "${WORKSPACE}/frontend":/app -w /app node:18-alpine sh -c "npm run build"'
                 }
             }
         }
@@ -33,7 +33,7 @@ pipeline {
                 dir('frontend') {
                     withCredentials([string(credentialsId: 'FIREBASE_TOKEN', variable: 'FIREBASE_TOKEN')]) {
                         sh '''
-                            docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c "
+                            docker run --rm -v "${WORKSPACE}/frontend":/app -w /app node:18-alpine sh -c "
                               npm install -g firebase-tools && \
                               firebase deploy --token=$FIREBASE_TOKEN
                             "
