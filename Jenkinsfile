@@ -1,46 +1,25 @@
 pipeline {
     agent any
-
     stages {
-        stage('Install dependencies') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                }
-            }
+        stage('Clone') {
             steps {
-                dir('frontend') {
-                    sh 'npm install'
-                }
+                echo "Cloning repo..."
+                checkout scm
             }
         }
-
         stage('Build') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                }
-            }
             steps {
-                dir('frontend') {
-                    sh 'npm run build'
-                }
+                echo "Building project..."
             }
         }
-
-        stage('Deploy to Firebase') {
-            agent {
-                docker {
-                    image 'node:18-alpine'
-                }
-            }
+        stage('Test') {
             steps {
-                dir('frontend') {
-                    withCredentials([string(credentialsId: 'FIREBASE_TOKEN', variable: 'FIREBASE_TOKEN')]) {
-                        sh 'npm install -g firebase-tools'
-                        sh 'firebase deploy --token "$FIREBASE_TOKEN"'
-                    }
-                }
+                echo "Running tests..."
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo "Deploying..."
             }
         }
     }
