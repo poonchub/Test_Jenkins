@@ -25,7 +25,6 @@ pipeline {
         stage('Deploy to Firebase') {
             steps {
                 dir('frontend') {
-                    sh 'npm install -g firebase-tools'
                     sh 'firebase deploy --token "$FIREBASE_TOKEN"'
                 }
             }
