@@ -1,41 +1,43 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_HOST = 'tcp://host.docker.internal:2375'
+    }
+
     stages {
+        stage('Test Docker Access') {
+            steps {
+                sh 'docker version'
+            }
+        }
+        
         stage('Install dependencies') {
             steps {
-                script {
-                    docker.image('node:18-alpine').inside('-u root') {
-                        dir('frontend') {
-                            sh 'npm install'
-                        }
-                    }
+                dir('frontend') {
+                    sh 'docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c "npm install"'
                 }
             }
         }
 
         stage('Build') {
             steps {
-                script {
-                    docker.image('node:18-alpine').inside {
-                        dir('frontend') {
-                            sh 'npm run build'
-                        }
-                    }
+                dir('frontend') {
+                    sh 'docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c "npm run build"'
                 }
             }
         }
 
         stage('Deploy to Firebase') {
             steps {
-                script {
-                    docker.image('node:18-alpine').inside {
-                        dir('frontend') {
-                            withCredentials([string(credentialsId: 'FIREBASE_TOKEN', variable: 'FIREBASE_TOKEN')]) {
-                                sh 'npm install -g firebase-tools'
-                                sh 'firebase deploy --token "$FIREBASE_TOKEN"'
-                            }
-                        }
+                dir('frontend') {
+                    withCredentials([string(credentialsId: 'FIREBASE_TOKEN', variable: 'FIREBASE_TOKEN')]) {
+                        sh '''
+                            docker run --rm -v "$PWD":/app -w /app node:18-alpine sh -c "
+                              npm install -g firebase-tools && \
+                              firebase deploy --token=$FIREBASE_TOKEN
+                            "
+                        '''
                     }
                 }
             }
